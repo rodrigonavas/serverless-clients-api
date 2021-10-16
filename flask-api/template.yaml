@@ -1,0 +1,84 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  clients-api
+
+  Sample SAM Template for clients-api
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+
+Resources:
+  ClientsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: clients
+      AttributeDefinitions:
+        - AttributeName: document
+          AttributeType: S
+      KeySchema:
+        - AttributeName: document
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+  ClientsApiFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: clients_api/
+      Handler: app.app
+      Runtime: python3.9
+      Architectures:
+        - x86_64
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName:
+              !Ref ClientsTable
+      Events:
+        Test:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /
+            Method: get
+        ListClients:
+          Type: Api 
+          Properties:
+            Path: /clients
+            Method: get
+        PutClient:
+          Type: Api 
+          Properties:
+            Path: /clients
+            Method: post
+        GetClient:
+          Type: Api 
+          Properties:
+            Path: /clients/{id}/
+            Method: get
+        PatchClient:
+          Type: Api 
+          Properties:
+            Path:  /clients/{id}/
+            Method: patch
+        DeleteClient:
+          Type: Api 
+          Properties:
+            Path:  /clients/{id}/
+            Method: delete
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  ClientsApi:
+    Description: "API Gateway endpoint URL for Prod stage for Clients Api function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+  ClientsApiFunction:
+    Description: "Clients Api Lambda Function ARN"
+    Value: !GetAtt ClientsApiFunction.Arn
+  ClientsApiFunctionIamRole:
+    Description: "Implicit IAM Role created for Clients Api function"
+    Value: !GetAtt ClientsApiFunctionRole.Arn
